@@ -3,7 +3,6 @@ var Proxy = function () {
     var storedData = {};
 
     var config = function () {
-        console.log("!!: " + JSON.stringify(storedData))
         return {
             mode: "fixed_servers",
             rules: {
@@ -32,9 +31,6 @@ var Proxy = function () {
             value: 'Basic ' + btoa(storedData.proxyUsername + ':' + storedData.proxyPassword)
         });
 
-        console.log("test: " + JSON.stringify(storedData));
-        console.log("test1: " + JSON.stringify(status.requestHeaders));
-
         return {requestHeaders: status.requestHeaders};
     };
 
@@ -48,11 +44,11 @@ var Proxy = function () {
     }
 
     var setProxy = function () {
-        if (storedData.proxyAddress != '') {
+        if (storedData.proxyAddress != undefined || storedData.proxyAddress != '') {
             chrome.proxy.settings.set(
                 {value: config(), scope: 'regular'},
                 function () {
-                    if (storedData.proxyAddress != "" || storedData.proxyUsername != "") {
+                    if (storedData.proxyAddress != undefined || storedData.proxyUsername != undefined || storedData.proxyAddress != "" || storedData.proxyUsername != "") {
                         if (chrome.webRequest.onAuthRequired) {
                             chrome.webRequest.onAuthRequired.addListener(authCredentials, {urls: ['<all_urls>']}, ['blocking']);
                         } else {
@@ -74,7 +70,6 @@ var Proxy = function () {
                 null,
                 function (items) {
                     storedData = items
-                    console.log("test2: " + storedData.proxyAddress)
                     setProxy();
                 }
             );
@@ -83,7 +78,7 @@ var Proxy = function () {
         chrome.proxy.settings.get(
             {'incognito': false},
             function (config) {
-                console.log(JSON.stringify(config));
+                console.log("Proxy settings: " + JSON.stringify(config));
             }
         );
     };
