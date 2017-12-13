@@ -50,14 +50,13 @@ var Proxy = function () {
     }
 
     var setProxy = function () {
-        console.log("proxy addr: " + storedData.proxyAddress)
-        if (Object.keys(storedData).length === 0 || storedData.proxyAddress.trim() === "" ) {
+        if (Object.keys(storedData).length === 0 || storedData.proxyAddress.trim() === "") {
             chrome.proxy.settings.set({value: config(), scope: 'regular'});
         } else {
             chrome.proxy.settings.set(
                 {value: config(), scope: 'regular'},
                 function () {
-                    if (storedData.proxyAddress != undefined || storedData.proxyUsername != undefined || storedData.proxyAddress != "" || storedData.proxyUsername != "") {
+                    if (storedData.proxyAddress != "" || storedData.proxyUsername != "") {
                         if (chrome.webRequest.onAuthRequired) {
                             chrome.webRequest.onAuthRequired.addListener(authCredentials, {urls: ['<all_urls>']}, ['blocking']);
                         } else {
@@ -68,7 +67,23 @@ var Proxy = function () {
                 }
             );
         }
+        debug();
     };
+
+    var debug = function () {
+        chrome.proxy.settings.get(
+            {'incognito': false},
+            function (config) {
+                console.log("Proxy settings: " + JSON.stringify(config));
+                console.log("Auth settings: " + JSON.stringify(
+                    {
+                        username: storedData.proxyUsername,
+                        password: storedData.proxyPassword
+                    }
+                ));
+            }
+        );
+    }
 
     var init = function () {
         if (Object.keys(storedData).length != 0) {
@@ -84,20 +99,12 @@ var Proxy = function () {
                 }
             );
         });
-
-        chrome.proxy.settings.get(
-            {'incognito': false},
-            function (config) {
-                console.log("Proxy settings: " + JSON.stringify(config));
-            }
-        );
     };
 
     this.run = function () {
         chrome.storage.sync.get(
             null,
             function (items) {
-                console.log("Items stored: " + JSON.stringify(items))
                 storedData = items
                 init();
             }
