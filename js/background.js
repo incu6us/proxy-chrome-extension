@@ -3,6 +3,12 @@ var Proxy = function () {
     var storedData = {};
 
     var config = function () {
+        if (Object.keys(storedData).length === 0 || storedData.proxyAddress == "") {
+            console.log("data: " + JSON.stringify(storedData))
+            return {
+                mode: "direct"
+            };
+        }
         return {
             mode: "fixed_servers",
             rules: {
@@ -44,7 +50,10 @@ var Proxy = function () {
     }
 
     var setProxy = function () {
-        if (storedData.proxyAddress != undefined || storedData.proxyAddress != '') {
+        console.log("proxy addr: " + storedData.proxyAddress)
+        if (Object.keys(storedData).length === 0 || storedData.proxyAddress.trim() === "" ) {
+            chrome.proxy.settings.set({value: config(), scope: 'regular'});
+        } else {
             chrome.proxy.settings.set(
                 {value: config(), scope: 'regular'},
                 function () {
@@ -62,8 +71,9 @@ var Proxy = function () {
     };
 
     var init = function () {
-        setProxy();
-
+        if (Object.keys(storedData).length != 0) {
+            setProxy();
+        }
         chrome.storage.onChanged.addListener(function (changes, namespace) {
             // for (k in changes)
             chrome.storage.sync.get(
