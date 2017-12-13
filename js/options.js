@@ -12,6 +12,12 @@ function save() {
     })
 }
 
+function clear() {
+    document.getElementById("proxyAddress").value = "";
+    document.getElementById("proxyUsername").value = "";
+    document.getElementById("proxyPassword").value = "";
+}
+
 function restore() {
     chrome.storage.sync.get({
             proxyAddress: "",
@@ -27,4 +33,5 @@ function restore() {
 }
 
 document.addEventListener("DOMContentLoaded", restore);
+document.getElementById("clear").addEventListener("click", clear);
 document.getElementById("save").addEventListener("click", save);
