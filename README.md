@@ -3,7 +3,7 @@ proxy-chrome-extension
 
 This is the Google Chrome plugin to setup a proxy setting within two cases:
 - first one - is a classic way to set a proxy with UI:
-    ![UI option example](http://prntscr.com/hnhs5j)
+    ![UI option example](https://image.prntscr.com/image/B5QUAbVlT4Ota44nLe8p-w.png)
 
 - dynamic setup with an URL parameters("blpProxyAddress", "blpProxyUsername", "blpProxyPassword"):
     ```
