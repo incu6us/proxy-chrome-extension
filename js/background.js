@@ -164,6 +164,7 @@ var ProxyByURL = function () {
     this.run = function () {
         var tabId = undefined;
         var url = undefined;
+        var blpProxyParams = ["blpProxyAddress", "blpProxyUsername", "blpProxyPassword"];
 
         chrome.webRequest.onBeforeRequest.addListener(function (details) {
             chrome.tabs.query({'active': true, 'lastFocusedWindow': true}, function (tabs) {
@@ -176,7 +177,7 @@ var ProxyByURL = function () {
                         // console.log("params: " + JSON.stringify(urlParams));
                         ProxyByURL.prototype.setProxy(urlParams.blpProxyAddress, urlParams.blpProxyUsername, urlParams.blpProxyPassword);
                         tabId = details.tabId;
-                        chrome.tabs.update(tabId, {url: removeBlpUrlParams(["blpProxyAddress", "blpProxyUsername", "blpProxyPassword"], url)});
+                        chrome.tabs.update(tabId, {url: removeBlpUrlParams(blpProxyParams, url)});
                     }
                 }
             });
