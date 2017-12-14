@@ -158,23 +158,36 @@ var ProxyByURL = function () {
         return rtn;
     };
 
+    /**
+     * "blpProxyAddress", "blpProxyUsername", "blpProxyPassword" - to pass proxy parameters
+     */
     this.run = function () {
+        var tabId = undefined;
+        var url = undefined;
+
         chrome.webRequest.onBeforeRequest.addListener(function (details) {
-            var url = undefined;
             chrome.tabs.query({'active': true, 'lastFocusedWindow': true}, function (tabs) {
                 if (tabs.length > 0 && tabs[0].hasOwnProperty("url")) {
                     url = tabs[0].url;
-                    console.log("URL: " + url)
+                    console.log("Loading URL: " + url)
                     var urlParams = parseQueryString(url);
                     if (urlParams.blpProxyAddress !== undefined) {
-                        console.log("Navigation: " + JSON.stringify(details));
-                        console.log("params: " + JSON.stringify(urlParams));
+                        // console.log("Navigation: " + JSON.stringify(details));
+                        // console.log("params: " + JSON.stringify(urlParams));
                         ProxyByURL.prototype.setProxy(urlParams.blpProxyAddress, urlParams.blpProxyUsername, urlParams.blpProxyPassword);
-                        chrome.tabs.update(details.tabId, {url: removeBlpUrlParams(["blpProxyAddress", "blpProxyUsername", "blpProxyPassword"], url)});
+                        tabId = details.tabId;
+                        chrome.tabs.update(tabId, {url: removeBlpUrlParams(["blpProxyAddress", "blpProxyUsername", "blpProxyPassword"], url)});
                     }
                 }
             });
         }, {urls: ['<all_urls>']}, ['blocking']);
+
+        chrome.tabs.onUpdated.addListener(function (tabId, info) {
+            if (info.status === "complete") {
+                ProxyByURL.prototype.setProxy();
+                console.log("Completed loading URL: " + url);
+            }
+        });
     };
 };
 
