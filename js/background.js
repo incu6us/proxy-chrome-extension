@@ -52,9 +52,7 @@ var Proxy = function () {
         }
     };
 
-    Proxy.prototype.setProxy = function(proxyAddress, proxyUsername, proxyPassword) {
-        // if (Object.keys(storedData).length === 0 || storedData.proxyAddress.trim() === "") {
-        console.log("1");
+    Proxy.prototype.setProxy = function (proxyAddress, proxyUsername, proxyPassword) {
         if (proxyAddress === undefined || proxyAddress.trim() === "") {
             chrome.proxy.settings.set({value: config(proxyAddress), scope: 'regular'});
         } else {
@@ -121,7 +119,10 @@ var Proxy = function () {
     };
 };
 
+
 var ProxyByURL = function () {
+
+    ProxyByURL.prototype = Object.create(Proxy.prototype);
 
     var parseQueryString = function (url) {
         var urlParams = {};
@@ -135,18 +136,47 @@ var ProxyByURL = function () {
         return urlParams;
     };
 
-    this.run = function () {
-        chrome.webNavigation.onBeforeNavigate.addListener(function (details) {
-            if (details.frameId === 0) {
-                console.log("Navigation: " + JSON.stringify(details));
-                var urlParams = parseQueryString(details.url);
-                console.log("params: " + JSON.stringify(urlParams));
+    var removeBlpUrlParams = function (keys, sourceURL) {
+        var rtn = sourceURL.split("?")[0],
+            param,
+            params_arr = [],
+            queryString = (sourceURL.indexOf("?") !== -1) ? sourceURL.split("?")[1] : "";
+        if (queryString !== "") {
+            params_arr = queryString.split("&");
+            for (var i = params_arr.length - 1; i >= 0; i -= 1) {
+                param = params_arr[i].split("=")[0];
+                for (var key = keys.length - 1; key >= 0; key -= 1) {
+                    if (param === keys[key]) {
+                        params_arr.splice(i, 1);
+                    }
+                }
             }
-        });
+            if (params_arr.length !== 0) {
+                rtn = rtn + "?" + params_arr.join("&");
+            }
+        }
+        return rtn;
+    };
+
+    this.run = function () {
+        chrome.webRequest.onBeforeRequest.addListener(function (details) {
+            var url = undefined;
+            chrome.tabs.query({'active': true, 'lastFocusedWindow': true}, function (tabs) {
+                if (tabs.length > 0 && tabs[0].hasOwnProperty("url")) {
+                    url = tabs[0].url;
+                    console.log("URL: " + url)
+                    var urlParams = parseQueryString(url);
+                    if (urlParams.blpProxyAddress !== undefined) {
+                        console.log("Navigation: " + JSON.stringify(details));
+                        console.log("params: " + JSON.stringify(urlParams));
+                        ProxyByURL.prototype.setProxy(urlParams.blpProxyAddress, urlParams.blpProxyUsername, urlParams.blpProxyPassword);
+                        chrome.tabs.update(details.tabId, {url: removeBlpUrlParams(["blpProxyAddress", "blpProxyUsername", "blpProxyPassword"], url)});
+                    }
+                }
+            });
+        }, {urls: ['<all_urls>']}, ['blocking']);
     };
 };
 
-var proxy = new Proxy();
-proxy.run();
-
+new Proxy().run();
 new ProxyByURL().run();
