@@ -161,7 +161,6 @@ var ProxyByURL = function () {
      * "blpProxyAddress", "blpProxyUsername", "blpProxyPassword" - to pass proxy parameters
      */
     this.run = function () {
-        var tabId = undefined;
         var finalUrl = undefined;
         var blpProxyParams = ["blpProxyAddress", "blpProxyUsername", "blpProxyPassword"];
 
