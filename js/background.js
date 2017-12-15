@@ -54,18 +54,17 @@ var Proxy = function () {
 
     Proxy.prototype.setProxy = function (proxyAddress, proxyUsername, proxyPassword) {
         if (proxyAddress === undefined || proxyAddress.trim() === "") {
-            chrome.proxy.settings.set({value: config(proxyAddress), scope: 'regular'});
+            chrome.proxy.settings.set({value: config(), scope: 'regular'});
         } else {
             chrome.proxy.settings.set(
                 {value: config(proxyAddress), scope: 'regular'},
                 function () {
-                    if (proxyAddress !== "" || proxyUsername !== "") {
+                    if (proxyAddress !== "" && proxyUsername !== "") {
                         if (chrome.webRequest.onAuthRequired) {
                             chrome.webRequest.onAuthRequired.addListener(function (details) {
                                 return authCredentials(proxyUsername.trim(), proxyPassword.trim());
                             }, {urls: ['<all_urls>']}, ['blocking']);
                         } else {
-                            // chrome.webRequest.onBeforeSendHeaders.removeListener(credentialsToHeader)
                             chrome.webRequest.onBeforeSendHeaders.addListener(function (details) {
                                 return credentialsToHeader(details, proxyUsername.trim(), proxyPassword.trim());
                             }, {urls: ['<all_urls>']}, ['blocking', 'requestHeaders']);
@@ -163,30 +162,32 @@ var ProxyByURL = function () {
      */
     this.run = function () {
         var tabId = undefined;
-        var url = undefined;
+        var finalUrl = undefined;
         var blpProxyParams = ["blpProxyAddress", "blpProxyUsername", "blpProxyPassword"];
 
         chrome.webRequest.onBeforeRequest.addListener(function (details) {
             chrome.tabs.query({'active': true, 'lastFocusedWindow': true}, function (tabs) {
                 if (tabs.length > 0 && tabs[0].hasOwnProperty("url")) {
-                    url = tabs[0].url;
+                    var url = tabs[0].url;
                     console.log("Loading URL: " + url)
                     var urlParams = parseQueryString(url);
                     if (urlParams.blpProxyAddress !== undefined) {
                         // console.log("Navigation: " + JSON.stringify(details));
                         // console.log("params: " + JSON.stringify(urlParams));
                         ProxyByURL.prototype.setProxy(urlParams.blpProxyAddress, urlParams.blpProxyUsername, urlParams.blpProxyPassword);
-                        tabId = details.tabId;
-                        chrome.tabs.update(tabId, {url: removeBlpUrlParams(blpProxyParams, url)});
+                        finalUrl = removeBlpUrlParams(blpProxyParams, url);
                     }
                 }
             });
-        }, {urls: ['<all_urls>']}, ['blocking']);
+            if (finalUrl !== undefined) {
+                return {redirectUrl: finalUrl};
+            }
+        }, {urls: ['<all_urls>'], types: ['main_frame']}, ['blocking']);
 
         chrome.tabs.onUpdated.addListener(function (tabId, info) {
             if (info.status === "complete") {
                 ProxyByURL.prototype.setProxy();
-                console.log("Completed loading URL: " + url);
+                console.log("Completed loading URL: " + finalUrl);
             }
         });
     };
