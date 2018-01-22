@@ -146,7 +146,7 @@ var ProxyByURL = function () {
         return urlParams;
     };
 
-    var removeBlpUrlParams = function (keys, sourceURL) {
+    var removeProxyUrlParams = function (keys, sourceURL) {
         var rtn = sourceURL.split("?")[0],
             param,
             params_arr = [],
@@ -169,22 +169,22 @@ var ProxyByURL = function () {
     };
 
     /**
-     * "blpProxyAddress", "blpProxyUsername", "blpProxyPassword" - to pass proxy parameters
+     * "proxyAddress", "proxyUsername", "proxyPassword" - to pass proxy parameters
      */
     this.run = function () {
         var url = undefined;
         var tabId = undefined;
-        var blpProxyParams = ["blpProxyAddress", "blpProxyUsername", "blpProxyPassword"];
+        var proxyParams = ["proxyAddress", "proxyUsername", "proxyPassword"];
 
         chrome.webRequest.onBeforeRequest.addListener(function (details) {
             if (details.frameId === 0 && details.type === "main_frame") {
                 url = details.url;
                 tabId = details.tabId;
                 var urlParams = parseQueryString(url);
-                if (urlParams !== undefined && urlParams.blpProxyAddress !== undefined) {
-                    ProxyByURL.prototype.setProxy(urlParams.blpProxyAddress, urlParams.blpProxyUsername, urlParams.blpProxyPassword);
+                if (urlParams !== undefined && urlParams.proxyAddress !== undefined) {
+                    ProxyByURL.prototype.setProxy(urlParams.proxyAddress, urlParams.proxyUsername, urlParams.proxyPassword);
                     console.log("URL: " + url);
-                    return {redirectUrl: removeBlpUrlParams(blpProxyParams, url)};
+                    return {redirectUrl: removeProxyUrlParams(proxyParams, url)};
                 }
 
             }
